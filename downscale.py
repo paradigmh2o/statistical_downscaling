@@ -25,15 +25,18 @@ def identify_correlation_zones(obs):
 
 	#iterating through all four seasons
 	for i,ssn in enumerate(('DJF','MAM','JJA','SON')):  
-	    #
+	    # Identify which indices in the array fall within the given season
 	    obs_season_inds = (obs.time.dt.season==ssn).values
+        # Identify the timeseries length for each season, so we can preallocate an array with the right dimensions
 	    season_ts_len = np.sum(obs_season_inds)
 	    if season_ts_len < min_len:
 	        min_len = season_ts_len
-
+            
+    # Preallocate array 
 	obs_seasons = np.zeros([4, min_len, obs_maxlat, obs_maxlon])
 	obs_seasons[:] = np.nan
-
+    
+    # Splitting timeseries into the four seasons, putting each season into a different part of the array
 	for i,ssn in enumerate(('DJF','MAM','JJA','SON')):  
 	    obs_season_inds = (obs.time.dt.season==ssn).values
 	    counter = 0
@@ -46,10 +49,12 @@ def identify_correlation_zones(obs):
 
 	obs_lons = np.arange(obs_maxlon)
 	obs_lats = np.arange(obs_maxlat)
-
+    
+    # Preallocate array to store correlation
 	all_pcarrs = np.zeros([4, obs_maxlat, obs_maxlon, obs_maxlat, obs_maxlon])
 	all_pcarrs[:] = np.nan
-
+    
+    # For reach season, check which cells are correlated to each other
 	tlen = len(obs_lats)*len(obs_lons)*4
 	with tqdm(total=tlen) as pbar:
 		for i in range(4):
@@ -75,6 +80,7 @@ def dt2cal(dt):
     
     return Y,M,D
 
+#extracting all the necessary numpy arrays and datetimes from xarray objects
 def preprocess(obs,mod_fut,):
     obs = obs.interp(coords={'lon':mod_fut.lon.values, 'lat':mod_fut.lat.values},method='linear')
     obs_vals = obs.pr.values
