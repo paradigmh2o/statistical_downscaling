@@ -60,11 +60,11 @@ def identify_correlation_zones(obs):
 		for i in range(4):
 		    for obs_lat in obs_lats:
 		        for obs_lon in obs_lons:
-		            obs_ts = obs_seasons[0,:,obs_lat,obs_lon]
+		            obs_ts = obs_seasons[i,:,obs_lat,obs_lon]
 		            if ~np.isnan(obs_ts[25]):
 		                for comp_lat in obs_lats:
 		                    for comp_lon in obs_lons:
-		                        comp_ts = obs_seasons[0,:,comp_lat,comp_lon]
+		                        comp_ts = obs_seasons[i,:,comp_lat,comp_lon]
 		                        if ~np.isnan(comp_ts[25]):
 		                            pc,pval = pearsonr(obs_ts,comp_ts)
 		                            all_pcarrs[i,obs_lat,obs_lon,comp_lat,comp_lon] = pc
