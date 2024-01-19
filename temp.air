@@ -1,0 +1,24 @@
+x58y75    LSPC METEOROLOGICAL DATA FILE FOR DRIVING WATERSHED MODEL
+x58y75    Time interval:  60 mins          Last month in printout year: 12
+x58y75    No. of curves plotted:  Point-valued:  0   Mean-valued:  1   Total  1
+x58y75    Label flag:  0          Pivl:    1          Idelt:  60
+x58y75    Plot title:  x58y75
+x58y75    Y-axis label:
+x58y75    Scale info:  Ymin:  0.00000               Threshold:-0.10000E+31
+x58y75                 Ymax:   1000.0
+x58y75                 Time:   20.000     intervals/inch
+x58y75    Data for each curve (Point-valued first, then mean-valued):
+x58y75    Label                   LINTYP     INTEQ    COLCOD      TRAN   TRANCOD
+x58y75    POT ET, IN/TIMESTEP          0         5         1      AVER         2
+x58y75    AIR TEMP, DEG F              0         5         1      AVER         2
+x58y75    WIND SPEED,MI/TIMESTEP       0         5         1      AVER         2
+x58y75    SOLAR RAD,LY/TIMESTEP        0         5         1      AVER         2
+x58y75    DEW POINT, DEG F             0         5         1      AVER         2
+x58y75    CLOUD COVER, TENTHS          0         5         1      AVER         2
+x58y75
+x58y75
+x58y75
+x58y75    Time series (pt-valued, then mean-valued):
+x58y75
+x58y75    Date/time                      Values
+x58y75
