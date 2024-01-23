@@ -94,6 +94,8 @@ for gcm, rcp in itertools.product(gcms, rcps):
     dsfut_df = dsfut_df / 25.4  # convert mm to inches
     dsfut_df.columns = lat_lons
 
+    print(dsfut_df.sum())
+
     # create downscaled netCDF
     dsfut_nc = xr.DataArray(dsfut,
                             coords={'time': np.asarray(dt_idx), 'y': mod_fut.lat.values, 'x': mod_fut.lon.values},
