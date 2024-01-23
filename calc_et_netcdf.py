@@ -1,7 +1,7 @@
 """
 Benjamin Bowes, 1-12-2024
 
-Utility script to flatten a netCDF file into a csv with datetime index and Lat-Long columns
+Script to calculate potential evapotranspiration and create air files for GCM/RCP combinations
 """
 
 import os
@@ -78,12 +78,16 @@ for gcm, rcp in itertools.product(gcms, rcps):
     for met_df in [tmin_df, tmax_df, tmean_df, srad_df, windsp_df, rhmin_df, rhmax_df]:
         # print(met_df.index[0], met_df.index[-1])
         met_df.columns = lat_lons
+        # print(met_df.index[0].hour)
+        if met_df.index[0].hour == 0:  # check that all timestamps are 12:00
+            met_df.index = met_df.index + pd.to_timedelta(12, unit='hour')
+        # print(met_df.index[0].hour)
 
     # loop over LOCA grid cells and calculate PM PET
     for lat_lon in lat_lons:
         if lat_lon == '32.59375_-117.21875':
             continue
-        print(lat_lon)
+        # print(lat_lon)
         lat = float(lat_lon.split('_')[0])
         lat_rad = lat * np.pi / 180  # radians
         lon = float(lat_lon.split('_')[1])
@@ -95,12 +99,32 @@ for gcm, rcp in itertools.product(gcms, rcps):
 
         # Calculate PET in mm/day
         pet_pm = pyet.pm(tmean_df[lat_lon], windsp_df[lat_lon], rn=srad_df[lat_lon], elevation=elev, lat=lat_rad,
-                         tmax=tmax_df[lat_lon], tmin=tmin_df[lat_lon],
-                         rhmax=rhmax_df[lat_lon], rhmin=rhmin_df[lat_lon])
+                         tmax=tmax_df[lat_lon], tmin=tmin_df[lat_lon], rhmax=rhmax_df[lat_lon], rhmin=rhmin_df[lat_lon])
         pet_pm = pet_pm.to_frame()
-        pet_pm['Penman_Monteith'] = pet_pm['Penman_Monteith'] / 24 / 25.4  # mm/day to in/hr
-        pet_hr = pet_pm.resample('H').ffill()  # TODO distribute ET over daylight hours only
+        if pet_pm['Penman_Monteith'].isna().all():
+            print(gcm, rcp, lat_lon, grid_id, "empty PEVT")
+            # pet_pm = pyet.oudin(tmean_df[lat_lon], lat=lat_rad)  # Oudin fall back calculation
+            # pet_h = pyet.hargreaves(tmean_df[lat_lon], tmax_df[lat_lon], tmin_df[lat_lon], lat=lat_rad)
+            # pet_fao24 = pyet.fao_24(tmean_df[lat_lon], windsp_df[lat_lon], srad_df[lat_lon], rhmin_df[lat_lon], elevation=elev)
+            # pet_abtew = pyet.abtew(tmean_df[lat_lon], srad_df[lat_lon])
+            # pet_pm = pet_pm.to_frame()
+
+        # distribute ET over daylight hours only (6:00 - 19:00 SD average)
+        # using normal distribution
+        if pet_pm.index[0].hour == 12:  # check that all timestamps are 12:00
+            pet_pm.index = pet_pm.index - pd.to_timedelta(12, unit='hour')
+        pet_pm['Penman_Monteith'] = pet_pm['Penman_Monteith'] / 25.4  # mm/day to in/day
+        pet_hr = pet_pm.resample('H').ffill()
         pet_hr.dropna(axis=0, inplace=True)
+        pet_hr['pm'] = 0.0
+
+        daylight_norm_dist = [0, 0, 0, 0, 0, 0, 0.032089274, 0.04753085, 0.065549629, 0.084167389, 0.10062281,
+                              0.112002572, 0.116074952, 0.112002572, 0.10062281, 0.084167389, 0.065549629, 0.04753085,
+                              0.032089274, 0, 0, 0, 0, 0]
+        for hr, mult in enumerate(daylight_norm_dist):
+            # print(hr, mult)
+            pet_hr['pm'].loc[pet_hr.index.hour == hr] = pet_hr['Penman_Monteith'] * mult
+            # pet_hr['pm'].loc[(pet_hr.index.hour >= 6) & (pet_hr.index.hour <= 19)] = pet_hr['Penman_Monteith']
 
         # # resample to hourly
         # fut_start = pet_pm.index[0] - datetime.timedelta(hours=12)
@@ -128,6 +152,6 @@ for gcm, rcp in itertools.product(gcms, rcps):
         pet_hr['Day'] = pet_hr['DTTM'].dt.day
         pet_hr['Hour'] = pet_hr['DTTM'].dt.hour
         pet_hr['Minute'] = pet_hr['DTTM'].dt.minute
-        pet_hr = pet_hr[['STA', 'Year', 'Month', 'Day', 'Hour', 'Minute', 'Penman_Monteith']]
+        pet_hr = pet_hr[['STA', 'Year', 'Month', 'Day', 'Hour', 'Minute', 'pm']]
         pet_hr.to_csv(os.path.join(out_path, '{}_{}_{}_LOCA.air'.format(grid_id, gcm, rcp)),
                       mode='a', sep=' ', header=False, index=False)
