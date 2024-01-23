@@ -1,15 +1,14 @@
+"""
+Benjamin Bowes, Jan. 23, 2024
+
+Script to downscale future climate data
+"""
+
 import os
 import pandas as pd
 import datetime
 import itertools
-import xarray as xr
-import numpy as np
-from glob import glob
 import pickle
-
-# import sys
-# sys.path.append('/media/eric/T51/projects_daily/projects/wmms-cc')
-
 from downscale import *
 
 base_dir = r"C:\Users\{}\Box\Projects\City of San Diego\IDEAs\ClimateChange".format(os.getlogin())
@@ -24,10 +23,11 @@ for i in [fut_out_dir, pcarr_dir]:
         os.mkdir(i)
 
 # Loop over files to be downscaled
-# rcps = ['rcp45', 'rcp85']
-rcps = ['historical']
+rcps = ['rcp45', 'rcp85']
+# rcps = ['rcp45']
 gcms = ["ACCESS1-0", "CCSM4", "CESM1-BGC", "CMCC-CMS", "CNRM-CM5",
         "CanESM2", "GFDL-CM3", "HadGEM2-CC", "HadGEM2-ES", "MIROC5"]  # CCTAG GCM subset
+# gcms = ["HadGEM2-ES"]  # CCTAG GCM subset
 
 # Opening observed data for testing
 # obs = xr.open_dataset(r"C:\Users\Ben\Box\Projects\LA County\Climate Change\5_Model\DownScaling_scripts\FromHamided'sComputer\ClimateChange\Downscaling_Handoff_Data\lac_nldas.nc").load()
@@ -61,15 +61,13 @@ for gcm, rcp in itertools.product(gcms, rcps):
     # Formatting the lat/lon coordinates for modeled future data, extracting lat/lon coordinates into np array
     latvals = mod_fut.lat[(mod_fut.lat <= obs.lat.max()) & (mod_fut.lat >= obs.lat.min())].values
     lonvals = mod_fut.lon[(mod_fut.lon <= obs.lon.max()) & (mod_fut.lon >= obs.lon.min())].values
-    # latvals = mod_fut.lat.values
-    # lonvals = mod_fut.lon.values
 
     # Observed and modeled future data may be on different grids.
     # This interpolates the observed data to the same grid as the modeled future data.
-    obsinterp = obs.interp(lat=latvals, lon=lonvals, kwargs={'bounds_error': True, 'fill_value': np.nan})
+    obsinterp = obs.interp(lat=latvals, lon=lonvals, kwargs={'bounds_error': False, 'fill_value': np.nan})
 
     # save obsinterp for QA
-    # obsinterp.to_netcdf(r"C:\Users\Ben\Box\Projects\City of San Diego\IDEAs\ClimateChange\NLDAS\Merged\NLDAS_LOCA_interp.nc")
+    # obsinterp.to_netcdf(r"C:\Users\Ben\Box\Projects\City of San Diego\IDEAs\ClimateChange\NLDAS\Merged\NLDAS_LOCA_interp2.nc")
 
     # Identifying which grid cells are correlated with each other
     pcarr = identify_correlation_zones(obsinterp, precip_name='APCP')
@@ -96,6 +94,12 @@ for gcm, rcp in itertools.product(gcms, rcps):
     dsfut_df = dsfut_df / 25.4  # convert mm to inches
     dsfut_df.columns = lat_lons
 
+    # create downscaled netCDF
+    dsfut_nc = xr.DataArray(dsfut,
+                            coords={'time': np.asarray(dt_idx), 'y': mod_fut.lat.values, 'x': mod_fut.lon.values},
+                            dims=["time", "y", "x"],
+                            attrs=dict(description="precipitation", units="kg m-2"))
+
     # Save downscaled values
-    # print(dsfut)
+    dsfut_nc.to_netcdf(os.path.join(fut_out_dir, '{}.nc4'.format(ds_name)))
     dsfut_df.to_csv(os.path.join(fut_out_dir, '{}.csv'.format(ds_name)))

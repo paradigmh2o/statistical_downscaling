@@ -117,20 +117,21 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
     downscaled_fut = np.zeros((len(mod_fut_timestamps)*24, coarse_latmax, coarse_lonmax),dtype=np.float64)
     downscaled_fut[:] = np.nan
 
-    currentcell = 1
     coarse_lats = np.arange(coarse_latmax)
     coarse_lons = np.arange(coarse_lonmax)
 
     numcells = len(coarse_lats)*len(coarse_lons)
 
+    currentcell = 0
     for lat in coarse_lats:
         for lon in coarse_lons:
             currentcell += 1
+            # print(currentcell, lat, lon)
             if (~np.isnan(mod_fut_vals[25,lat,lon])) & (np.sum(np.isfinite(pcarr[1,lat,lon,:,:])) > 0):
 
                 mod_fut_len = len(mod_fut_timestamps)
                 mod_fut_ts_inds = np.arange(mod_fut_len)
-                for t in mod_fut_ts_inds:
+                for t in mod_fut_ts_inds:  # loop over future hourly time stamps
 
                     # for the given time step, determine the season
                     season = mod_fut_seasons[t]
@@ -151,12 +152,12 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
                     #mask_inds = np.arange(len(masklats))
 
 
-                    # find the modeled future depths at that timestep and DL lat/lon
+                    # find the modeled future depths at that timestep (3 day window) and DL lat/lon
                     if t == len(mod_fut_timestamps) - 1:
                         depths = mod_fut_vals[t-1:t+1,lat,lon]
                         depths = np.append(depths,np.float64(0))
                     elif t == 0:
-                        depths = mod_fut_vals[0:3,lat,lon]
+                        depths = mod_fut_vals[0:3,lat,lon]  # first three days
                     else:
                         depths = mod_fut_vals[t-1:t+2,lat,lon]
 
@@ -233,6 +234,7 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
 
                         if best_rmse!=np.inf:
                             obs_match_inds = np.where(obs_day == best_timestamp)[0]
+                            # print(best_timestamp, len(obs_match_inds))
 
                             analog_ts = obs_vals[obs_match_inds,lat,lon]
 
@@ -252,12 +254,10 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
                                 print(mod_depth)
                                 print('-------------------')
 
-
-
                             scaleratio = mod_depth/analog_depth
                             analog_ts = analog_ts*scaleratio
-                        else:  # BB added
-                            analog_ts = np.zeros(24)  # BB added
+                        # else:  # BB added
+                        #     analog_ts = np.zeros(24)  # BB added
                     else:
                         analog_ts = np.zeros(24)
 
@@ -268,4 +268,3 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
                 sys.stdout.write('Cells: {}/{} \r'.format(currentcell,numcells))
                 sys.stdout.flush()
     return(downscaled_fut)
-
