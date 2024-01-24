@@ -208,11 +208,11 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
 
                         # iterate through every analog day that we found above
                         for i,analog_day in enumerate(range(1,num_analog_days-1)):
+                            # print(i, analog_day)
                             # this will store the rmse for ONE DAY, across ALL CORRELATED LOCATIONS
                             tot_rmse = 0
                             # iterate through EVERY CORRELATED LOCATION
-
-                            for m,masklat in enumerate(masklats):
+                            for m, masklat in enumerate(masklats):
                                 masklon = masklons[m]
 
                                 # extract the observed depths for ONE OF THE CORRELATED LOCATIONS
@@ -224,15 +224,20 @@ def loca(mod_fut_vals,mod_fut_timestamps,mod_fut_seasons,mod_fut_doy,obs_vals,ob
                                 diffs[0] = diffs[0]/4
                                 diffs[2] = diffs[2]/4
                                 samp_rmse = np.sqrt(np.sum(diffs**2)/len(masklats))
+                                if np.isnan(samp_rmse):
+                                    continue
+                                # print(tot_rmse, samp_rmse)
                                 # add the rmse for THIS LOCATION to the rmse for ALL LOCATIONS
-                                tot_rmse += samp_rmse
+                                else:
+                                    tot_rmse += samp_rmse
+                                # print(tot_rmse, samp_rmse)
 
                             # comparing rmse for ALL LOCATIONS against best rmse. if it's better, reset best rmse and store this timestamp
                             if (tot_rmse < best_rmse) & (comp_analog_depths[analog_day,lat,lon]>0):
                                 best_rmse = tot_rmse
                                 best_timestamp = all_analog_day_timestamps[i+1]
 
-                        if best_rmse!=np.inf:
+                        if best_rmse != np.inf:
                             obs_match_inds = np.where(obs_day == best_timestamp)[0]
                             # print(best_timestamp, len(obs_match_inds))
 

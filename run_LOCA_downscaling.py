@@ -27,6 +27,7 @@ rcps = ['rcp45', 'rcp85']
 # rcps = ['rcp45']
 gcms = ["ACCESS1-0", "CCSM4", "CESM1-BGC", "CMCC-CMS", "CNRM-CM5",
         "CanESM2", "GFDL-CM3", "HadGEM2-CC", "HadGEM2-ES", "MIROC5"]  # CCTAG GCM subset
+# gcms = ["CNRM-CM5", "CanESM2", "GFDL-CM3", "HadGEM2-CC", "HadGEM2-ES", "MIROC5"]  # CCTAG GCM subset
 # gcms = ["HadGEM2-ES"]  # CCTAG GCM subset
 
 # Opening observed data for testing
@@ -34,6 +35,7 @@ gcms = ["ACCESS1-0", "CCSM4", "CESM1-BGC", "CMCC-CMS", "CNRM-CM5",
 obs = xr.open_dataset(obs_pth).load()
 
 for gcm, rcp in itertools.product(gcms, rcps):
+# for gcm, rcp in zip(['CCSM4', 'CMCC-CMS', 'CESM1-BGC'], ['rcp85', 'rcp45', 'rcp85']):
     # print(gcm, rcp)
     file = "{}_{}_Merged.nc".format(gcm, rcp)
     file_name = file.split('_Merged.nc')[0]
@@ -94,13 +96,16 @@ for gcm, rcp in itertools.product(gcms, rcps):
     dsfut_df = dsfut_df / 25.4  # convert mm to inches
     dsfut_df.columns = lat_lons
 
-    print(dsfut_df.sum())
+    # check for empty cells
+    for lat_lon in lat_lons:
+        if dsfut_df[lat_lon].sum() == 0:
+            print(lat_lon, dsfut_df[lat_lon].sum())
 
     # create downscaled netCDF
     dsfut_nc = xr.DataArray(dsfut,
-                            coords={'time': np.asarray(dt_idx), 'y': mod_fut.lat.values, 'x': mod_fut.lon.values},
-                            dims=["time", "y", "x"],
-                            attrs=dict(description="precipitation", units="kg m-2"))
+                            coords={'time': np.asarray(dt_idx), 'lat': mod_fut.lat.values, 'lon': mod_fut.lon.values},
+                            dims=["time", "lat", "lon"],
+                            attrs=dict(description="pre", units="kg m-2"))
 
     # Save downscaled values
     dsfut_nc.to_netcdf(os.path.join(fut_out_dir, '{}.nc4'.format(ds_name)))
