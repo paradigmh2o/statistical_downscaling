@@ -1,7 +1,7 @@
 # downscale-tools
 Statistical downscaling tools and utilities
 
-![GCM_Downscaling](https://github.com/paradigmh2o/statistical_downscaling/blob/d517580182d4077398f33bf29ff0c2b68a671293/GCM_Downscaling.png)
+![GCM_Downscaling](https://github.com/paradigmh2o/statistical_downscaling/blob/4f5aa3820f6a42a04e514c0b1a854531fcddf3f5/GCM_Downscaling.png)
 
 ## Utilities
 - get_cal_adapt_data.py: pulls netCDF files of LOCA downscaled daily meteorological variables for multiple GCMs/RCPs
