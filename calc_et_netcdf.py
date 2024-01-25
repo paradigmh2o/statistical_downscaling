@@ -17,7 +17,7 @@ base_dir = r"C:\Users\{}\Box\Projects\City of San Diego\IDEAs\ClimateChange\CalA
 out_dir = r"C:\Users\{}\Box\Projects\City of San Diego\IDEAs\ClimateChange\LSPC_Weather".format(os.getlogin())
 
 gcms = ["HadGEM2-ES", "CNRM-CM5", "CanESM2", "MIROC5"]   # 4 priority GCMs
-rcps = ['historical', 'rcp45', 'rcp85']
+rcps = ['rcp45', 'rcp85']
 met_vars = ['solards', 'wspeed', 'tasmin', 'tasmax', 'rel_humid']
 
 elev_df = pd.read_csv(os.path.join(base_dir, "LOCA_Grid_Elevation.csv"))
@@ -142,8 +142,9 @@ for gcm, rcp in itertools.product(gcms, rcps):
         # write to air file
         with open(air_template, "r") as f:
             header_row = f.read().replace('x58y75', str(grid_id))
-        np.savetxt(os.path.join(out_path, '{}_{}_{}_LOCA.air'.format(grid_id, gcm, rcp)),
-                   np.asarray([header_row]), fmt='%s')
+        # np.savetxt(os.path.join(out_path, '{}_{}_{}_LOCA.air'.format(grid_id, gcm, rcp)),
+        #            np.asarray([header_row]), fmt='%s')
+        np.savetxt(os.path.join(out_path, 'LOCA_Grid_{}.air'.format(grid_id)), np.asarray([header_row]), fmt='%s')
 
         pet_hr['STA'] = grid_id
         pet_hr['DTTM'] = pet_hr.index
@@ -153,5 +154,7 @@ for gcm, rcp in itertools.product(gcms, rcps):
         pet_hr['Hour'] = pet_hr['DTTM'].dt.hour
         pet_hr['Minute'] = pet_hr['DTTM'].dt.minute
         pet_hr = pet_hr[['STA', 'Year', 'Month', 'Day', 'Hour', 'Minute', 'pm']]
-        pet_hr.to_csv(os.path.join(out_path, '{}_{}_{}_LOCA.air'.format(grid_id, gcm, rcp)),
+        # pet_hr.to_csv(os.path.join(out_path, '{}_{}_{}_LOCA.air'.format(grid_id, gcm, rcp)),
+        #               mode='a', sep=' ', header=False, index=False)
+        pet_hr.to_csv(os.path.join(out_path, 'LOCA_Grid_{}.air'.format(grid_id)),
                       mode='a', sep=' ', header=False, index=False)
